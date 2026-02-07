@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Zidaan.SMP | Professional Portal</title>
+    <style>
+      :root {
+        --mc-green: #2ecc71;
+        --mc-red: #e74c3c;
+        --mc-dark: #2c3e50;
+        --bg-light: #f4f7f6;
+        --mc-blue: #3498db;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Segoe UI", sans-serif;
+        background-color: var(--bg-light);
+        color: var(--mc-dark);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+      }
+
+      .container {
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        width: 100%;
+        max-width: 500px;
+        text-align: center;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        border: 1px solid #ddd;
+        max-height: 90vh;
+        overflow-y: auto;
+      }
+
+      .hidden {
+        display: none;
+      }
+      input {
+        width: 90%;
+        padding: 12px;
+        margin: 10px 0;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+      }
+      button {
+        background: var(--mc-dark);
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        margin: 5px;
+        transition: 0.3s;
+      }
+      button:hover {
+        opacity: 0.8;
+      }
+
+      #admin-trigger-btn {
+        background: var(--mc-red);
+        width: 100%;
+        margin-top: 10px;
+      }
+      #save-btn {
+        background: var(--mc-green);
+        width: 100%;
+        margin-top: 10px;
+      }
+      .msg-btn {
+        background: var(--mc-blue);
+        width: 100%;
+      }
+      .msg-locked {
+        background: #95a5a6 !important;
+        cursor: not-allowed;
+      }
+
+      .feed-group {
+        text-align: left;
+        margin-bottom: 12px;
+      }
+      .feed-label {
+        font-size: 11px;
+        font-weight: bold;
+        color: #7f8c8d;
+        text-transform: uppercase;
+      }
+      textarea {
+        width: 100%;
+        height: 40px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        padding: 8px;
+        resize: none;
+        background: #fdfdfd;
+        font-family: inherit;
+      }
+      .admin-editing {
+        border: 2px solid var(--mc-red) !important;
+        background: #fff5f5 !important;
+      }
+
+      #freeze-screen {
+        border: 8px solid var(--mc-red);
+      }
+      .reset-btn {
+        background: #f1c40f;
+        color: black;
+        margin-top: 20px;
+      }
+
+      #chat-window {
+        height: 200px;
+        background: #f9f9f9;
+        border: 1px solid #ddd;
+        overflow-y: auto;
+        text-align: left;
+        padding: 10px;
+        margin-bottom: 10px;
+        border-radius: 6px;
+      }
+      .chat-entry {
+        margin-bottom: 8px;
+        font-size: 14px;
+        border-bottom: 1px solid #eee;
+      }
+      .chat-user {
+        font-weight: bold;
+        color: var(--mc-blue);
+      }
+    </style>
+  </head>
+  <body onload="checkBan()">
+    <audio id="siren-sound" loop>
+      <source
+        src="https://cdn.pixabay.com/audio/2022/03/10/audio_731383796d.mp3"
+      />
+    </audio>
+
+    <div id="freeze-screen" class="container hidden">
+      <h1 style="color: var(--mc-red); font-size: 40px">FREEZE</h1>
+      <p><strong>SECURITY BREACH DETECTED</strong></p>
+      <button class="reset-btn" onclick="systemReset()">RESET SYSTEM</button>
+    </div>
+
+    <div id="start-screen" class="container">
+      <h1>Zidaan.SMP</h1>
+      <button onclick="showScreen('login-screen')">LOGIN</button>
+      <button onclick="showScreen('signup-screen')">SIGN UP</button>
+    </div>
+
+    <div id="dashboard" class="container hidden">
+      <h2 id="welcome-user">WELCOME</h2>
+
+      <div class="feed-group">
+        <span class="feed-label">🚀 New Updates</span
+        ><textarea readonly id="box-updates"></textarea>
+      </div>
+      <div class="feed-group">
+        <span class="feed-label">🛡️ Admins</span
+        ><textarea readonly id="box-admins"></textarea>
+      </div>
+      <div class="feed-group">
+        <span class="feed-label">⚖️ Crime Report</span
+        ><textarea readonly id="box-crime"></textarea>
+      </div>
+      <div class="feed-group">
+        <span class="feed-label">🚨 Emergency</span
+        ><textarea readonly id="box-emergency"></textarea>
+      </div>
+      <div class="feed-group">
+        <span class="feed-label">🗳️ Voting</span
+        ><textarea readonly id="box-voting"></textarea>
+      </div>
+
+      <button id="main-msg-btn" class="msg-btn" onclick="enterChat()">
+        MESSAGES
+      </button>
+
+      <button id="admin-trigger-btn" onclick="tryAdmin()">ADMIN PANEL</button>
+      <button id="save-btn" class="hidden" onclick="saveAdminData()">
+        SAVE CHANGES
+      </button>
+
+      <button
+        onclick="location.reload()"
+        style="width: 100%; background: #95a5a6; margin-top: 10px"
+      >
+        LOGOUT
+      </button>
+
+      <div
+        id="admin-controls"
+        class="hidden"
+        style="border-top: 2px solid var(--mc-red); margin-top: 20px"
+      >
+        <h3 style="color: var(--mc-red)">Settings</h3>
+        <button
+          onclick="toggleChatLock()"
+          style="width: 100%; background: orange"
+        >
+          LOCK/UNLOCK CHAT
+        </button>
+        <div
+          id="member-display"
+          style="text-align: left; margin-top: 10px"
+        ></div>
+      </div>
+    </div>
+
+    <div id="chat-screen" class="container hidden">
+      <h2>GLOBAL CHAT</h2>
+      <div id="chat-window"></div>
+      <input type="text" id="chat-input" placeholder="Type message..." />
+      <button
+        onclick="sendMessage()"
+        style="width: 100%; background: var(--mc-blue)"
+      >
+        SEND
+      </button>
+      <button
+        onclick="showScreen('dashboard')"
+        style="width: 100%; background: #95a5a6"
+      >
+        BACK
+      </button>
+    </div>
+
+    <div id="login-screen" class="container hidden">
+      <h1>LOGIN</h1>
+      <input type="text" id="login-name" placeholder="Name" />
+      <button onclick="handleAuth('login')">ENTER</button>
+    </div>
+    <div id="signup-screen" class="container hidden">
+      <h1>SIGN UP</h1>
+      <input type="text" id="signup-name" placeholder="Choose Name" />
+      <button onclick="handleAuth('signup')">REGISTER</button>
+    </div>
+
+    <script>
+      let currentUser = "";
+      let adminAttempts = 0;
+      const vips = [
+        "MUNIB KAPADIA",
+        "SARFARAZ KAPADIA",
+        "ZIDAAN KAPADIA",
+        "SHAHZEENA KAPADIA",
+        "ASHAR KAPADIA",
+      ];
+      const feedKeys = ["updates", "admins", "crime", "emergency", "voting"];
+
+      function showScreen(id) {
+        document
+          .querySelectorAll(".container")
+          .forEach((c) => c.classList.add("hidden"));
+        document.getElementById(id).classList.remove("hidden");
+      }
+
+      function handleAuth(type) {
+        let name = document
+          .getElementById(type === "login" ? "login-name" : "signup-name")
+          .value.trim()
+          .toUpperCase();
+        if (!name) return;
+        let users = JSON.parse(localStorage.getItem("smpUsers")) || [];
+        if (
+          type === "signup" &&
+          !vips.includes(name) &&
+          !users.includes(name)
+        ) {
+          users.push(name);
+          localStorage.setItem("smpUsers", JSON.stringify(users));
+        }
+        currentUser = name;
+        document.getElementById("welcome-user").innerText = "PLAYER: " + name;
+        showScreen("dashboard");
+        updateChatButtonStatus();
+        loadFeed();
+      }
+
+      function enterChat() {
+        if (localStorage.getItem("chatLocked") === "true")
+          return alert("Chat is locked.");
+        showScreen("chat-screen");
+        renderMessages();
+      }
+
+      function sendMessage() {
+        let input = document.getElementById("chat-input");
+        if (!input.value) return;
+        let history = JSON.parse(localStorage.getItem("smpChat")) || [];
+        history.push({ user: currentUser, text: input.value });
+        localStorage.setItem("smpChat", JSON.stringify(history));
+        input.value = "";
+        renderMessages();
+      }
+
+      function renderMessages() {
+        let history = JSON.parse(localStorage.getItem("smpChat")) || [];
+        document.getElementById("chat-window").innerHTML = history
+          .map(
+            (m) =>
+              `<div class="chat-entry"><span class="chat-user">${m.user}:</span> ${m.text}</div>`
+          )
+          .join("");
+        document.getElementById("chat-window").scrollTop = 9999;
+      }
+
+      function tryAdmin() {
+        if (prompt("Admin Password:") === "ZIDAAN123") {
+          document.getElementById("admin-trigger-btn").classList.add("hidden");
+          document.getElementById("save-btn").classList.remove("hidden");
+          document.getElementById("admin-controls").classList.remove("hidden");
+          document.querySelectorAll("textarea").forEach((t) => {
+            t.readOnly = false;
+            t.classList.add("admin-editing");
+          });
+          renderMembers();
+        } else {
+          adminAttempts++;
+          if (adminAttempts >= 2) triggerFreeze();
+        }
+      }
+
+      function saveAdminData() {
+        feedKeys.forEach((k) =>
+          localStorage.setItem(
+            "smp_" + k,
+            document.getElementById("box-" + k).value
+          )
+        );
+        alert("SUCCESS: Saved!");
+        location.reload();
+      }
+
+      function triggerFreeze() {
+        localStorage.setItem("banActive", "true");
+        showScreen("freeze-screen");
+        document.getElementById("siren-sound").play();
+      }
+
+      function systemReset() {
+        if (prompt("ENTER RESET CODE:") === "zidaan1234") {
+          localStorage.removeItem("banActive");
+          location.reload();
+        }
+      }
+
+      function checkBan() {
+        if (localStorage.getItem("banActive") === "true") {
+          showScreen("freeze-screen");
+          document.getElementById("siren-sound").play();
+        }
+      }
+
+      function toggleChatLock() {
+        let isLocked = localStorage.getItem("chatLocked") === "true";
+        localStorage.setItem("chatLocked", !isLocked);
+        updateChatButtonStatus();
+        alert(isLocked ? "Chat Unlocked" : "Chat Locked");
+      }
+
+      function updateChatButtonStatus() {
+        let btn = document.getElementById("main-msg-btn");
+        if (localStorage.getItem("chatLocked") === "true") {
+          btn.classList.add("msg-locked");
+          btn.innerText = "MESSAGES (LOCKED)";
+        } else {
+          btn.classList.remove("msg-locked");
+          btn.innerText = "MESSAGES";
+        }
+      }
+
+      function loadFeed() {
+        feedKeys.forEach(
+          (k) =>
+            (document.getElementById("box-" + k).value =
+              localStorage.getItem("smp_" + k) || "")
+        );
+      }
+
+      function renderMembers() {
+        let users = JSON.parse(localStorage.getItem("smpUsers")) || [];
+        let display = document.getElementById("member-display");
+        display.innerHTML = "<strong>Members:</strong><br>";
+        users.forEach((u, i) => {
+          display.innerHTML += `<div style="display:flex; justify-content:space-between; margin-top:5px;">${u} <span onclick="deleteUser(${i})" style="color:red; cursor:pointer;">[DEL]</span></div>`;
+        });
+      }
+
+      function deleteUser(i) {
+        let users = JSON.parse(localStorage.getItem("smpUsers"));
+        users.splice(i, 1);
+        localStorage.setItem("smpUsers", JSON.stringify(users));
+        renderMembers();
+      }
+    </script>
+  </body>
+</html>
